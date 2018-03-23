@@ -424,11 +424,11 @@ void security_shm_free(struct shmid_kernel *shp);
 int security_shm_associate(struct shmid_kernel *shp, int shmflg);
 int security_shm_shmctl(struct shmid_kernel *shp, int cmd);
 int security_shm_shmat(struct shmid_kernel *shp, char __user *shmaddr, int shmflg);
-int security_sem_alloc(struct sem_array *sma);
-void security_sem_free(struct sem_array *sma);
-int security_sem_associate(struct sem_array *sma, int semflg);
-int security_sem_semctl(struct sem_array *sma, int cmd);
-int security_sem_semop(struct sem_array *sma, struct sembuf *sops,
+int security_sem_alloc(struct kern_ipc_perm *sma);
+void security_sem_free(struct kern_ipc_perm *sma);
+int security_sem_associate(struct kern_ipc_perm *sma, int semflg);
+int security_sem_semctl(struct kern_ipc_perm *sma, int cmd);
+int security_sem_semop(struct kern_ipc_perm *sma, struct sembuf *sops,
 			unsigned nsops, int alter);
 void security_d_instantiate(struct dentry *dentry, struct inode *inode);
 int security_getprocattr(struct task_struct *p, const char *lsm, char *name,
