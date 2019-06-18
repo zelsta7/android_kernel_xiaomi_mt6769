@@ -315,6 +315,12 @@ out_undo:
 	list_add(&net->exit_list, &net_exit_list);
 	saved_ops = ops;
 	list_for_each_entry_continue_reverse(ops, &pernet_list, list)
+		ops_pre_exit_list(ops, &net_exit_list);
+
+	synchronize_rcu();
+
+	saved_ops = ops;
+	list_for_each_entry_continue_reverse(ops, &pernet_list, list)
 		ops_exit_list(ops, &net_exit_list);
 
 	ops = saved_ops;
