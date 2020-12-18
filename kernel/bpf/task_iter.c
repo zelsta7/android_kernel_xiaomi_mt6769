@@ -156,13 +156,16 @@ again:
 		curr_fd = info->fd;
 	} else {
 		curr_task = task_seq_get_next(ns, &curr_tid, true);
-		if (!curr_task)
+		if (!curr_task) {
+			info->task = NULL;
+			info->files = NULL;
+			info->tid = curr_tid;
 			return NULL;
 
 		curr_files = get_files_struct(curr_task);
 		if (!curr_files) {
 			put_task_struct(curr_task);
-			curr_tid = ++(info->tid);
+			curr_tid = curr_tid + 1;
 			info->fd = 0;
 			goto again;
 		}
