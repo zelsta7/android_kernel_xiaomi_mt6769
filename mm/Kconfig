@@ -811,3 +811,5 @@ config PROCESS_RECLAIM
 	 (addr, addr + size-bytes) of the process.
 
 	 Any other value is ignored.
+
+source "mm/damon/Kconfig"
