@@ -1026,6 +1026,8 @@ late_initcall(rcu_verify_early_boot_tests);
 void rcu_early_boot_tests(void) {}
 #endif /* CONFIG_PROVE_RCU */
 
+#include "tasks.h"
+
 #ifndef CONFIG_TINY_RCU
 
 /*
