@@ -34,24 +34,24 @@
 #define PD_SRC_PDO_TYPE_VARIABLE	2
 #define PD_SRC_PDO_TYPE_AUGMENTED	3
 
-#define BATT_MAX_CHG_VOLT		4480
+#define BATT_MAX_CHG_VOLT		4460 //new requirement from xiaomi hw, CP should config 4460
 #define BATT_FAST_CHG_CURR		6000
 #define BUS_MIVR_THRESHOLD		4200
 #define	BUS_OVP_THRESHOLD		12000
 #define	BUS_OVP_ALARM_THRESHOLD		9500
 
-#define BUS_VOLT_INIT_UP		300
-
 #define BAT_VOLT_LOOP_LMT		BATT_MAX_CHG_VOLT
 #define BAT_CURR_LOOP_LMT		BATT_FAST_CHG_CURR
 #define BUS_VOLT_LOOP_LMT		BUS_OVP_THRESHOLD
 
-#define PM_WORK_RUN_NORMAL_INTERVAL		500
-#if defined(CONFIG_KERNEL_CUSTOM_FACTORY)
+#if defined(CONFIG_KERNEL_CUSTOM_FACTORY) // factory FAMMI test
 #define PM_WORK_RUN_QUICK_INTERVAL		100
+#define PM_WORK_RUN_NORMAL_INTERVAL		300
 #else
 #define PM_WORK_RUN_QUICK_INTERVAL		200
+#define PM_WORK_RUN_NORMAL_INTERVAL		300
 #endif
+
 enum {
 	PM_ALGO_RET_OK,
 	PM_ALGO_RET_THERM_FAULT,
@@ -384,7 +384,7 @@ static bool pd_disable_cp_by_jeita_status(struct usbpd_pm *pdpm)
 	if (!pdpm->bms_psy)
 		return false;
 
-	rc = power_supply_get_property(pdpm->bms_psy,
+	rc = power_supply_get_property(pdpm->sw_psy,
 				POWER_SUPPLY_PROP_TEMP, &pval);
 	if (rc < 0) {
 		pr_info("Couldn't get batt temp prop:%d\n", rc);
@@ -1017,13 +1017,17 @@ static int usbpd_pm_enable_sw(struct usbpd_pm *pdpm, bool enable)
 {
 	int ret;
 
-	if (!pdpm->sw_psy) {
-		pdpm->sw_psy = power_supply_get_by_name("battery");
-		if (!pdpm->sw_psy)
-			return -ENODEV;
+	if (!ch1_dev) {
+        ch1_dev = get_charger_by_name("primary_chg");
+        if (!ch1_dev)
+		return -ENODEV;
 	}
 
-	pdpm->sw.charge_enabled = enable;
+	ret = charger_dev_enable(ch1_dev,enable);
+	if(ret < 0) {
+		pr_err("fail to set main charger %d\n",enable);
+	}
+
 	return ret;
 }
 
@@ -1394,10 +1398,7 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 
 	case PD_PM_STATE_FC2_ENTRY:
 		if (pm_config.fc2_disable_sw) {
-			if (pdpm->sw.charge_enabled) {
-				usbpd_pm_enable_sw(pdpm, false);
-				usbpd_pm_check_sw_enabled(pdpm);
-			}
+			usbpd_pm_enable_sw(pdpm, false);
 			if (!pdpm->sw.charge_enabled)
 				usbpd_pm_move_state(pdpm, PD_PM_STATE_FC2_ENTRY_1);
 		} else {
@@ -1410,12 +1411,12 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 		if (pdpm->cp.sc8551_bypass_charge_enable == 1
 				&& pdpm->cp.sc8551_charge_mode == SC8551_CHARGE_MODE_BYPASS) {
 			curr_ibus_lmt = curr_fcc_lmt;
-			pdpm->request_voltage = pdpm->cp.vbat_volt + BUS_VOLT_INIT_UP / 2;
+			pdpm->request_voltage = pdpm->cp.vbat_volt *107/100;
 			pdpm->request_current = min(pdpm->apdo_max_curr, curr_ibus_lmt);
 			pdpm->request_current = min(pdpm->request_current, MAX_BYPASS_CURRENT_MA);
 		} else {
 			curr_ibus_lmt = curr_fcc_lmt >> 1;
-			pdpm->request_voltage = pdpm->cp.vbat_volt * 2 + BUS_VOLT_INIT_UP;
+			pdpm->request_voltage = pdpm->request_voltage = pdpm->cp.vbat_volt *213/100;
 			pdpm->request_current = min(pdpm->apdo_max_curr, curr_ibus_lmt);
 		}
 
@@ -1490,7 +1491,7 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 	case PD_PM_STATE_FC2_ENTRY_3:
 		if (pm_config.cp_sec_enable && !pdpm->cp_sec.charge_enabled) {
 			usbpd_pm_enable_cp_sec(pdpm, true);
-			msleep(30);
+			msleep(100);
 			usbpd_pm_check_cp_sec_enabled(pdpm);
 		}
 
@@ -1509,7 +1510,7 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 			usbpd_pm_enable_cp(pdpm, true);
 		#endif
 		/* 2021.01.21 longcheer jiangshitian change for mic noise end */
-			msleep(30);
+			msleep(100);
 			usbpd_pm_check_cp_enabled(pdpm);
 		}
 
@@ -1531,6 +1532,7 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 				usbpd_pm_enable_cp(pdpm, true);
 			#endif
 			/* 2021.01.21 longcheer jiangshitian change for mic noise end */
+				msleep(100);
 				usbpd_pm_check_cp_enabled(pdpm);
 				usbpd_pm_move_state(pdpm, PD_PM_STATE_FC2_TUNE);
 				ibus_lmt_change_timer = 0;
@@ -1656,7 +1658,7 @@ static void usbpd_pm_workfunc(struct work_struct *work)
 		if (pdpm->cp.vbat_volt >= HIGH_VOL_THR_MV)
 			internal = PM_WORK_RUN_QUICK_INTERVAL;
 		else
-			internal = PM_WORK_RUN_QUICK_INTERVAL;
+			internal = PM_WORK_RUN_NORMAL_INTERVAL;
 		schedule_delayed_work(&pdpm->pm_work,
 				msecs_to_jiffies(internal));
 	}
@@ -2020,8 +2022,8 @@ static int usbpd_pm_remove(struct platform_device *pdev)
 {
 	power_supply_unreg_notifier(&__pdpm->nb);
 	cancel_delayed_work(&__pdpm->pm_work);
-	cancel_work(&__pdpm->cp_psy_change_work);
-	cancel_work(&__pdpm->usb_psy_change_work);
+	cancel_work_sync(&__pdpm->cp_psy_change_work);
+	cancel_work_sync(&__pdpm->usb_psy_change_work);
 
 	return 0;
 }
