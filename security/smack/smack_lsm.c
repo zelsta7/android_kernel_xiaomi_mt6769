@@ -2902,7 +2902,6 @@ static int smack_shm_alloc_security(struct shmid_kernel *shp)
 }
 
 /**
-<<<<<<< HEAD
  * smack_shm_free_security - Clear the security blob for shm
  * @shp: the object
  *
@@ -2916,8 +2915,6 @@ static void smack_shm_free_security(struct shmid_kernel *shp)
 }
 
 /**
-=======
->>>>>>> 6a86628f977d (BACKPORT: LSM: Infrastructure management of the ipc security blob)
  * smk_curacc_shm : check if current has access on shm
  * @shp : the object
  * @access : access requested
@@ -3154,7 +3151,6 @@ static int smack_msg_queue_alloc_security(struct msg_queue *msq)
 }
 
 /**
-<<<<<<< HEAD
  * smack_msg_free_security - Clear the security blob for msg
  * @msq: the object
  *
@@ -3168,8 +3164,6 @@ static void smack_msg_queue_free_security(struct msg_queue *msq)
 }
 
 /**
-=======
->>>>>>> 6a86628f977d (BACKPORT: LSM: Infrastructure management of the ipc security blob)
  * smack_of_msq - the smack pointer for the msq
  * @msq: the object
  *
