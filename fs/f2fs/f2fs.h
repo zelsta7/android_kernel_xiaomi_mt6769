@@ -829,8 +829,8 @@ struct f2fs_inode_info {
 	int i_extra_isize;		/* size of extra space located in i_addr */
 	kprojid_t i_projid;		/* id for project quota */
 	int i_inline_xattr_size;	/* inline xattr size */
-	struct timespec i_crtime;	/* inode creation time */
-	struct timespec i_disk_time[4];	/* inode disk times */
+	struct timespec64 i_crtime;	/* inode creation time */
+	struct timespec64 i_disk_time[4];	/* inode disk times */
 
 	/* for file compress */
 	u64 i_compr_blocks;			/* # of compressed blocks */
@@ -2938,11 +2938,17 @@ static inline void clear_file(struct inode *inode, int type)
 
 static inline bool f2fs_is_time_consistent(struct inode *inode)
 {
-	if (!timespec_equal(F2FS_I(inode)->i_disk_time, &inode->i_atime))
+	if (F2FS_I(inode)->i_disk_time[0].tv_sec != inode->i_atime.tv_sec ||
+	    F2FS_I(inode)->i_disk_time[0].tv_nsec != inode->i_atime.tv_nsec)
 		return false;
-	if (!timespec_equal(F2FS_I(inode)->i_disk_time + 1, &inode->i_ctime))
+	if (F2FS_I(inode)->i_disk_time[1].tv_sec != inode->i_ctime.tv_sec ||
+	    F2FS_I(inode)->i_disk_time[1].tv_nsec != inode->i_ctime.tv_nsec)
 		return false;
-	if (!timespec_equal(F2FS_I(inode)->i_disk_time + 2, &inode->i_mtime))
+	if (F2FS_I(inode)->i_disk_time[2].tv_sec != inode->i_mtime.tv_sec ||
+	    F2FS_I(inode)->i_disk_time[2].tv_nsec != inode->i_mtime.tv_nsec)
+		return false;
+	if (F2FS_I(inode)->i_disk_time[3].tv_sec != F2FS_I(inode)->i_crtime.tv_sec ||
+	    F2FS_I(inode)->i_disk_time[3].tv_nsec != F2FS_I(inode)->i_crtime.tv_nsec)
 		return false;
 	if (!timespec_equal(F2FS_I(inode)->i_disk_time + 3,
 						&F2FS_I(inode)->i_crtime))
@@ -2952,7 +2958,7 @@ static inline bool f2fs_is_time_consistent(struct inode *inode)
 
 static inline bool f2fs_skip_inode_update(struct inode *inode, int dsync)
 {
-	struct timespec ts;
+	struct timespec64 ts;
 	bool ret;
 
 	if (dsync) {
