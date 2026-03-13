@@ -2725,11 +2725,7 @@ out:
 static int ip6_convert_metrics(struct net *net, struct fib6_info *rt,
 			       struct fib6_config *cfg)
 {
-	struct net *net = cfg->fc_nlinfo.nl_net;
-	bool ecn_ca = false;
-	struct nlattr *nla;
-	int remaining;
-	u32 *mp;
+	int err = 0;
 
 	if (cfg->fc_mx) {
 		rt->fib6_metrics = kzalloc(sizeof(*rt->fib6_metrics),
@@ -2739,36 +2735,13 @@ static int ip6_convert_metrics(struct net *net, struct fib6_info *rt,
 
 		refcount_set(&rt->fib6_metrics->refcnt, 1);
 
-	nla_for_each_attr(nla, cfg->fc_mx, cfg->fc_mx_len, remaining) {
-		int type = nla_type(nla);
-		u32 val;
-
-		if (!type)
-			continue;
-		if (unlikely(type > RTAX_MAX))
-			goto err;
-
-		if (type == RTAX_CC_ALGO) {
-			char tmp[TCP_CA_NAME_MAX];
-
-			nla_strlcpy(tmp, nla, sizeof(tmp));
-			val = tcp_ca_get_key_by_name(net, tmp, &ecn_ca);
-			if (val == TCP_CA_UNSPEC)
-				goto err;
-		} else {
-			val = nla_get_u32(nla);
-		}
-		if (type == RTAX_HOPLIMIT && val > 255)
-			val = 255;
-		if (type == RTAX_FEATURES && (val & ~RTAX_FEATURE_MASK))
-			goto err;
-
-		mp[type - 1] = val;
-		__set_bit(type - 1, mxc->mx_valid);
+		err = ip_metrics_convert(net, cfg->fc_mx, cfg->fc_mx_len,
+					 rt->fib6_metrics->metrics);
 	}
 
 	return err;
 }
+
 
 static struct rt6_info *ip6_nh_lookup_table(struct net *net,
 					    struct fib6_config *cfg,

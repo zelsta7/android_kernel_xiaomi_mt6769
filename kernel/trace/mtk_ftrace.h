@@ -11,11 +11,31 @@
  * GNU General Public License for more details.
  */
 
-#ifndef _MTK_FTRACE_H
-#define  _MTK_FTRACE_H
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM mtk_ftrace
 
+#if !defined(_TRACE_MTK_FTRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_MTK_FTRACE_H
+
+#include <linux/tracepoint.h>
 #include <linux/string.h>
 #include <linux/seq_file.h>
+
+TRACE_EVENT(tracing_on,
+	TP_PROTO(int on, unsigned long ip),
+	TP_ARGS(on, ip),
+	TP_STRUCT__entry(
+		__field(int, on)
+		__field(unsigned long, ip)
+	),
+	TP_fast_assign(
+		__entry->on = on;
+		__entry->ip = ip;
+	),
+	TP_printk("ftrace is %s caller=%ps",
+		  __entry->on ? "enabled" : "disabled",
+		  (void *)__entry->ip)
+);
 
 #ifdef CONFIG_MTK_KERNEL_MARKER
 void trace_begin(char *name);
@@ -42,5 +62,13 @@ extern int boot_finish;
 #endif
 #else
 #define print_enabled_events(b, m)
-#endif/* CONFIG_TRACING && CONFIG_MTK_SCHED_TRACERS */
-#endif
+#endif /* CONFIG_TRACING && CONFIG_MTK_SCHED_TRACERS */
+
+#endif /* _TRACE_MTK_FTRACE_H */
+
+#undef TRACE_INCLUDE_PATH
+#undef TRACE_INCLUDE_FILE
+#define TRACE_INCLUDE_PATH .
+#define TRACE_INCLUDE_FILE mtk_ftrace
+
+#include <trace/define_trace.h>
