@@ -3066,10 +3066,8 @@ int do_swap_page(struct vm_fault *vmf)
 	bool vma_readahead = swap_use_vma_readahead();
 	bool vma_readmore = vma_readahead || !!page_cluster;
 
-	if (vma_readahead) {
+	if (vma_readahead)
 		page = swap_readahead_detect(vmf, &swap_ra);
-		swapcache = page;
-	}
 
 	ret = pte_unmap_same(vmf);
 	if (ret) {
@@ -3107,12 +3105,9 @@ int do_swap_page(struct vm_fault *vmf)
 		goto out;
 	}
 	delayacct_set_flag(DELAYACCT_PF_SWAPIN);
-	if (!page) {
+	if (!page)
 		page = lookup_swap_cache(entry, vma_readahead ? vma : NULL,
 					 vmf->address);
-		swapcache = page;
-	}
-
 	if (!page) {
 		struct swap_info_struct *si = swp_swap_info(entry);
 
