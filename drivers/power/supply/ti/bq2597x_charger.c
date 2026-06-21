@@ -57,6 +57,18 @@ enum {
 
 #define NOT_SUPPORT	-1
 
+static float sc8551_adc_lsb[] = {
+	[ADC_IBUS]	= SC8551_IBUS_ADC_LSB,
+	[ADC_VBUS]	= SC8551_VBUS_ADC_LSB,
+	[ADC_VAC]	= SC8551_VAC_ADC_LSB,
+	[ADC_VOUT]	= SC8551_VOUT_ADC_LSB,
+	[ADC_VBAT]	= SC8551_VBAT_ADC_LSB,
+	[ADC_IBAT]	= SC8551_IBAT_ADC_LSB,
+	[ADC_TBUS]	= SC8551_TSBUS_ADC_LSB,
+	[ADC_TBAT]	= SC8551_TSBAT_ADC_LSB,
+	[ADC_TDIE]	= SC8551_TDIE_ADC_LSB,
+};
+
 #define BYPASS_IN_DEFAULT_FCC_MA			3000
 #define BYPASS_OUT_DEFAULT_FCC_MA			3500
 
@@ -1097,26 +1109,10 @@ static int bq2597x_get_adc_data(struct bq2597x *bq, int channel,  int *result)
 	*result = t;
 
 	if (bq->chip_vendor == SC8551) {
-		if(channel == ADC_IBUS)
-			t = t * 15625/10000;
-		else if(channel == ADC_VBUS)
-			t = t * 375/100;
-		else if(channel == ADC_VAC)
-			t = t * 5;
-		else if(channel == ADC_VOUT)
-			t = t * 125/100;
-		else if(channel == ADC_VBAT)
-			t = t * 12575/10000;
-		else if(channel == ADC_IBAT)
-			t = t * 3125/1000;
-		else if(channel == ADC_TBUS)
-			t = t * 9766/100000;
-		else if(channel == ADC_TBAT)
-			t = t * 9766/100000;
-		else if(channel == ADC_TDIE)
-			t = t * 5/10;
+		kernel_neon_begin();
+		*result = (int)(t * sc8551_adc_lsb[channel]);
+		kernel_neon_end();
 	}
-	*result = t;
 
 	return 0;
 }
@@ -1906,7 +1902,7 @@ static int bq2597x_set_fsw(struct bq2597x *bq, int value)
 		case 7:
 			val = BQ2597X_FSW_SET_750KHZ_SC8851;
 		break;
-		default:
+		defalut:
 			val = BQ2597X_FSW_SET_500KHZ;
 		break;
 	}
