@@ -1486,6 +1486,8 @@ static int inode_doinit_with_dentry(struct inode *inode, struct dentry *opt_dent
 	u32 task_sid, sid = 0;
 	u16 sclass;
 	struct dentry *dentry;
+	char *context;
+	unsigned int len;
 	int rc = 0;
 
 	if (isec->initialized == LABEL_INITIALIZED)

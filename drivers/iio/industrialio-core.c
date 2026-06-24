@@ -217,7 +217,8 @@ s64 iio_get_time_ns(const struct iio_dev *indio_dev)
 	case CLOCK_MONOTONIC_RAW:
 		return ktime_get_raw_ns();
 	case CLOCK_REALTIME_COARSE:
-		return ktime_to_ns(ktime_get_coarse_real());
+		ktime_get_coarse_real_ts64(&tp);
+		return timespec64_to_ns(&tp);
 	case CLOCK_MONOTONIC_COARSE:
 		ktime_get_coarse_ts64(&tp);
 		return timespec64_to_ns(&tp);

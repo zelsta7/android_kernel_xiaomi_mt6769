@@ -1579,6 +1579,8 @@ union security_list_options {
 	void (*inode_getsecid)(struct inode *inode, u32 *secid);
 	int (*inode_copy_up)(struct dentry *src, struct cred **new);
 	int (*inode_copy_up_xattr)(const char *name);
+	int (*kernfs_init_security)(struct kernfs_node *kn_dir,
+				    struct kernfs_node *kn);
 
 	int (*file_permission)(struct file *file, int mask);
 	int (*file_alloc_security)(struct file *file);

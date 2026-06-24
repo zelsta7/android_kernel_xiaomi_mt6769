@@ -82,7 +82,7 @@
 #include <net/tls.h>
 
 /* Keep the struct bpf_fib_lookup small so that it fits into a cacheline */
-static_assert(sizeof(struct bpf_fib_lookup) == 64, "struct bpf_fib_lookup size check");
+BUILD_BUG_ON(sizeof(struct bpf_fib_lookup) > 64);
 
 static const struct bpf_func_proto *
 bpf_sk_base_func_proto(enum bpf_func_id func_id);
@@ -3569,7 +3569,7 @@ static int bpf_skb_net_grow(struct sk_buff *skb, u32 off, u32 len_diff,
 		 * the MSS.
 		 */
 		if (!(flags & BPF_F_ADJ_ROOM_FIXED_GSO)) {
-			skb_decrease_gso_size(shinfo, len_diff);
+			shinfo->gso_size -= len_diff;
 			if (shinfo->frag_list)
 				return skb_linearize(skb);
 		}
@@ -3605,7 +3605,7 @@ static int bpf_skb_net_shrink(struct sk_buff *skb, u32 off, u32 len_diff,
 	if (skb_is_gso(skb)) {
 		/* Due to header shrink, MSS can be upgraded. */
 		if (!(flags & BPF_F_ADJ_ROOM_FIXED_GSO))
-			skb_increase_gso_size(shinfo, len_diff);
+			skb_shinfo(skb)->gso_size += len_diff;
 
 		/* Header must be checked, and gso_segs recomputed. */
 		skb_shinfo(skb)->gso_type |= SKB_GSO_DODGY;
