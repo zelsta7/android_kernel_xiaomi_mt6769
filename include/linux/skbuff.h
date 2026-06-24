@@ -4190,8 +4190,6 @@ static inline bool skb_is_gso_v6(const struct sk_buff *skb)
 	return skb_shinfo(skb)->gso_type & SKB_GSO_TCPV6;
 }
 
-<<<<<<< HEAD
-=======
 /* Note: Should be called only if skb_is_gso(skb) is true */
 static inline bool skb_is_gso_sctp(const struct sk_buff *skb)
 {
@@ -4204,7 +4202,6 @@ static inline bool skb_is_gso_tcp(const struct sk_buff *skb)
 	return skb_shinfo(skb)->gso_type & (SKB_GSO_TCPV4 | SKB_GSO_TCPV6);
 }
 
->>>>>>> 6145fb8050d8 (UPSTREAM: bpf: only adjust gso_size on bytestream protocols)
 static inline void skb_gso_reset(struct sk_buff *skb)
 {
 	skb_shinfo(skb)->gso_size = 0;
