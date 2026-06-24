@@ -551,7 +551,7 @@ static void __net_exit netns_bpf_pernet_pre_exit(struct net *net)
 
 static struct pernet_operations netns_bpf_pernet_ops __net_initdata = {
 	.init = netns_bpf_pernet_init,
-	.pre_exit = netns_bpf_pernet_pre_exit,
+	.exit = netns_bpf_pernet_pre_exit,
 };
 
 static int __init netns_bpf_init(void)

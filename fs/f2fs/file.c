@@ -2153,7 +2153,7 @@ static int f2fs_ioc_abort_atomic_write(struct file *filp)
 	inode_lock(inode);
 
 	if (f2fs_is_atomic_file(inode))
-		f2fs_abort_atomic_write(inode, true);
+		f2fs_drop_inmem_pages(inode);
 
 	clear_inode_flag(inode, FI_ATOMIC_REVOKE_REQUEST);
 

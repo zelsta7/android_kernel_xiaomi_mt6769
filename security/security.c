@@ -1704,7 +1704,7 @@ void security_msg_msg_free(struct msg_msg *msg)
 
 int security_msg_queue_alloc(struct msg_queue *msq)
 {
-	int rc = lsm_ipc_alloc(msq);
+	int rc = lsm_ipc_alloc(&msq->q_perm);
 
 	if (unlikely(rc))
 		return rc;
@@ -1745,7 +1745,7 @@ int security_msg_queue_msgrcv(struct msg_queue *msq, struct msg_msg *msg,
 
 int security_shm_alloc(struct shmid_kernel *shp)
 {
-	int rc = lsm_ipc_alloc(shp);
+	int rc = lsm_ipc_alloc(&shp->shm_perm);
 
 	if (unlikely(rc))
 		return rc;
@@ -1779,7 +1779,7 @@ int security_shm_shmat(struct shmid_kernel *shp, char __user *shmaddr, int shmfl
 
 int security_sem_alloc(struct sem_array *sma)
 {
-	int rc = lsm_ipc_alloc(sma);
+	int rc = lsm_ipc_alloc(&sma->sem_perm);
 
 	if (unlikely(rc))
 		return rc;

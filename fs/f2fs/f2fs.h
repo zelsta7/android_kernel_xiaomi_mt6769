@@ -2950,7 +2950,7 @@ static inline bool f2fs_is_time_consistent(struct inode *inode)
 	if (F2FS_I(inode)->i_disk_time[3].tv_sec != F2FS_I(inode)->i_crtime.tv_sec ||
 	    F2FS_I(inode)->i_disk_time[3].tv_nsec != F2FS_I(inode)->i_crtime.tv_nsec)
 		return false;
-	if (!timespec_equal(F2FS_I(inode)->i_disk_time + 3,
+	if (!timespec64_equal(F2FS_I(inode)->i_disk_time + 3,
 						&F2FS_I(inode)->i_crtime))
 		return false;
 	return true;
