@@ -5812,7 +5812,7 @@ static int selinux_msg_queue_alloc_security(struct msg_queue *msq)
 	u32 sid = current_sid();
 	int rc;
 
-	isec = selinux_ipc(msq);
+	isec = selinux_ipc(&msq->q_perm);
 	ipc_init_security(isec, SECCLASS_MSGQ);
 
 	ad.type = LSM_AUDIT_DATA_IPC;
@@ -5830,7 +5830,7 @@ static int selinux_msg_queue_associate(struct msg_queue *msq, int msqflg)
 	struct common_audit_data ad;
 	u32 sid = current_sid();
 
-	isec = selinux_ipc(msq);
+	isec = selinux_ipc(&msq->q_perm);
 
 	ad.type = LSM_AUDIT_DATA_IPC;
 	ad.u.ipc_id = msq->q_perm.key;
@@ -5878,7 +5878,7 @@ static int selinux_msg_queue_msgsnd(struct msg_queue *msq, struct msg_msg *msg, 
 	u32 sid = current_sid();
 	int rc;
 
-	isec = selinux_ipc(msq);
+	isec = selinux_ipc(&msq->q_perm);
 	msec = selinux_msg_msg(msg);
 
 	/*
@@ -5926,7 +5926,7 @@ static int selinux_msg_queue_msgrcv(struct msg_queue *msq, struct msg_msg *msg,
 	u32 sid = task_sid(target);
 	int rc;
 
-	isec = selinux_ipc(msq);
+	isec = selinux_ipc(&msq->q_perm);
 	msec = selinux_msg_msg(msg);
 
 	ad.type = LSM_AUDIT_DATA_IPC;
@@ -5950,7 +5950,7 @@ static int selinux_shm_alloc_security(struct shmid_kernel *shp)
 	u32 sid = current_sid();
 	int rc;
 
-	isec = selinux_ipc(shp);
+	isec = selinux_ipc(&shp->shm_perm);
 	ipc_init_security(isec, SECCLASS_SHM);
 
 	ad.type = LSM_AUDIT_DATA_IPC;
@@ -5968,7 +5968,7 @@ static int selinux_shm_associate(struct shmid_kernel *shp, int shmflg)
 	struct common_audit_data ad;
 	u32 sid = current_sid();
 
-	isec = selinux_ipc(shp);
+	isec = selinux_ipc(&shp->shm_perm);
 
 	ad.type = LSM_AUDIT_DATA_IPC;
 	ad.u.ipc_id = shp->shm_perm.key;
@@ -6034,7 +6034,7 @@ static int selinux_sem_alloc_security(struct sem_array *sma)
 	u32 sid = current_sid();
 	int rc;
 
-	isec = selinux_ipc(sma);
+	isec = selinux_ipc(&sma->sem_perm);
 	ipc_init_security(isec, SECCLASS_SEM);
 
 	ad.type = LSM_AUDIT_DATA_IPC;
@@ -6052,7 +6052,7 @@ static int selinux_sem_associate(struct sem_array *sma, int semflg)
 	struct common_audit_data ad;
 	u32 sid = current_sid();
 
-	isec = selinux_ipc(sma);
+	isec = selinux_ipc(&sma->sem_perm);
 
 	ad.type = LSM_AUDIT_DATA_IPC;
 	ad.u.ipc_id = sma->sem_perm.key;
@@ -7016,12 +7016,7 @@ static struct security_hook_list selinux_hooks[] __lsm_ro_after_init = {
 
 static __init int selinux_init(void)
 {
-	if (!security_module_enable("selinux")) {
-		selinux_enabled = 0;
-		return 0;
-	}
-
-	if (!selinux_enabled) {
+	if (!selinux_enabled_boot) {
 		printk(KERN_INFO "SELinux:  Disabled at boot.\n");
 		return 0;
 	}

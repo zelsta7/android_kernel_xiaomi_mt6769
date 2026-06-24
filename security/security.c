@@ -1743,9 +1743,9 @@ int security_msg_queue_msgrcv(struct msg_queue *msq, struct msg_msg *msg,
 	return call_int_hook(msg_queue_msgrcv, 0, msq, msg, target, type, mode);
 }
 
-int security_shm_alloc(struct kern_ipc_perm *shp)
+int security_shm_alloc(struct shmid_kernel *shp)
 {
-	int rc = lsm_ipc_alloc(shp);
+	int rc = lsm_ipc_alloc(&shp->shm_perm);
 
 	if (unlikely(rc))
 		return rc;
@@ -1755,31 +1755,31 @@ int security_shm_alloc(struct kern_ipc_perm *shp)
 	return rc;
 }
 
-void security_shm_free(struct kern_ipc_perm *shp)
+void security_shm_free(struct shmid_kernel *shp)
 {
 	call_void_hook(shm_free_security, shp);
-	kfree(shp->security);
-	shp->security = NULL;
+	kfree(shp->shm_perm.security);
+	shp->shm_perm.security = NULL;
 }
 
-int security_shm_associate(struct kern_ipc_perm *shp, int shmflg)
+int security_shm_associate(struct shmid_kernel *shp, int shmflg)
 {
 	return call_int_hook(shm_associate, 0, shp, shmflg);
 }
 
-int security_shm_shmctl(struct kern_ipc_perm *shp, int cmd)
+int security_shm_shmctl(struct shmid_kernel *shp, int cmd)
 {
 	return call_int_hook(shm_shmctl, 0, shp, cmd);
 }
 
-int security_shm_shmat(struct kern_ipc_perm *shp, char __user *shmaddr, int shmflg)
+int security_shm_shmat(struct shmid_kernel *shp, char __user *shmaddr, int shmflg)
 {
 	return call_int_hook(shm_shmat, 0, shp, shmaddr, shmflg);
 }
 
-int security_sem_alloc(struct kern_ipc_perm *sma)
+int security_sem_alloc(struct sem_array *sma)
 {
-	int rc = lsm_ipc_alloc(sma);
+	int rc = lsm_ipc_alloc(&sma->sem_perm);
 
 	if (unlikely(rc))
 		return rc;
@@ -1789,24 +1789,24 @@ int security_sem_alloc(struct kern_ipc_perm *sma)
 	return rc;
 }
 
-void security_sem_free(struct kern_ipc_perm *sma)
+void security_sem_free(struct sem_array *sma)
 {
 	call_void_hook(sem_free_security, sma);
-	kfree(sma->security);
-	sma->security = NULL;
+	kfree(sma->sem_perm.security);
+	sma->sem_perm.security = NULL;
 }
 
-int security_sem_associate(struct kern_ipc_perm *sma, int semflg)
+int security_sem_associate(struct sem_array *sma, int semflg)
 {
 	return call_int_hook(sem_associate, 0, sma, semflg);
 }
 
-int security_sem_semctl(struct kern_ipc_perm *sma, int cmd)
+int security_sem_semctl(struct sem_array *sma, int cmd)
 {
 	return call_int_hook(sem_semctl, 0, sma, cmd);
 }
 
-int security_sem_semop(struct kern_ipc_perm *sma, struct sembuf *sops,
+int security_sem_semop(struct sem_array *sma, struct sembuf *sops,
 			unsigned nsops, int alter)
 {
 	return call_int_hook(sem_semop, 0, sma, sops, nsops, alter);
