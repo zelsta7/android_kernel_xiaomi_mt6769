@@ -210,4 +210,9 @@ pcpu_free_vm_areas(struct vm_struct **vms, int nr_vms)
 int register_vmap_purge_notifier(struct notifier_block *nb);
 int unregister_vmap_purge_notifier(struct notifier_block *nb);
 
+static inline void set_vm_flush_reset_perms(void *addr)
+{
+}
+
 #endif /* _LINUX_VMALLOC_H */
+
