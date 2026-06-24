@@ -161,6 +161,7 @@ again:
 			info->files = NULL;
 			info->tid = curr_tid;
 			return NULL;
+		}
 
 		curr_files = get_files_struct(curr_task);
 		if (!curr_files) {
