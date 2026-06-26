@@ -27,8 +27,6 @@ ifeq ($(CONFIG_MTK_LENS_USE_MODULE), y)
 
 SUB_CFILES += sub_lens.c
 
-SUB_CFILES += common/dw9714af/DW9714AF.c
-
 obj-m := subaf.o
 subaf-objs := $(SUB_CFILES:.c=.o)
 
@@ -36,6 +34,8 @@ else
 
 obj-y  += sub_lens.o
 
+ifeq ($(CONFIG_MTK_LENS_DW9714AF_SUPPORT), y)
 obj-y  += common/dw9714af/
+endif
 
 endif

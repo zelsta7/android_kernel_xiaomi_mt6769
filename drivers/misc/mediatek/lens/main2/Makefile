@@ -27,8 +27,6 @@ ifeq ($(CONFIG_MTK_LENS_USE_MODULE), y)
 
 MAIN2_CFILES += main2_lens.c
 
-MAIN2_CFILES  += common/dw9800waf/DW9800WAF.c
-
 obj-m := main2af.o
 main2af-objs := $(MAIN2_CFILES:.c=.o)
 
@@ -36,6 +34,8 @@ else
 
 obj-y += main2_lens.o
 
+ifeq ($(CONFIG_MTK_LENS_DW9800WAF_SUPPORT), y)
 obj-y  += common/dw9800waf/
+endif
 
 endif

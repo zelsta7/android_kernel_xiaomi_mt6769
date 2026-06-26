@@ -88,9 +88,11 @@ static struct stAF_OisPosInfo OisPosInfo;
 /* ------------------------- */
 
 static struct stAF_DrvList g_stAF_DrvList[MAX_NUM_OF_LENS] = {
+#ifdef CONFIG_MTK_LENS_DW9800WAF_SUPPORT
 	{1, AFDRV_DW9800WAF, DW9800WAF_SetI2Cclient_Main2,
 		DW9800WAF_Ioctl_Main2,
 	DW9800WAF_Release_Main2, NULL, NULL},
+#endif
 };
 
 static struct stAF_DrvList *g_pstAF_CurDrv;

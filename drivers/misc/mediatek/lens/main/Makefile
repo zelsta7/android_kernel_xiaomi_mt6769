@@ -40,9 +40,12 @@ else
 
 obj-y  += main_lens.o
 
+ifeq ($(CONFIG_MTK_LENS_DW9714AF_SUPPORT), y)
 obj-y  += common/dw9714af/
-obj-y  += common/dw9800waf/
+endif
+ifeq ($(CONFIG_MTK_LENS_GT9764AF_SUPPORT), y)
 obj-y  += common/gt9764af/
+endif
 ifeq ($(CONFIG_MTK_LENS_DW9800WAF_SUPPORT), y)
   obj-y  += common/dw9800waf/
 endif
