@@ -368,12 +368,9 @@ static void fscrypt_check_hie_ext4(struct bio *bio, const struct inode *inode)
 		if (ci->ci_inode->i_sb->s_magic == EXT4_SUPER_MAGIC) {
 			bc->hie_ext4 = true;
 			bc->hie_f2fs_legacy = false;
-		} else if (ci->ci_inode->i_sb->s_magic == F2FS_SUPER_MAGIC) {
-			bc->hie_ext4 = false;
-			bc->hie_f2fs_legacy = true;
 		} else {
 			bc->hie_ext4 = false;
-			bc->hie_f2fs_legacy = false;  // unknown fs, no legacy
+			bc->hie_f2fs_legacy = true;
 		}
 	} else {
 		bc->hie_ext4 = false;
