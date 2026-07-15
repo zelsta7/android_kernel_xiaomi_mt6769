@@ -41,7 +41,11 @@
 #include <linux/time.h>
 
 void
+<<<<<<< HEAD
 udf_disk_stamp_to_time(struct timespec64 *dest, struct timestamp src)
+=======
+udf_disk_stamp_to_time(struct timespec *dest, struct timestamp src)
+>>>>>>> openela-lts/linux-4.14.y
 {
 	u16 typeAndTimezone = le16_to_cpu(src.typeAndTimezone);
 	u16 year = le16_to_cpu(src.year);
@@ -75,7 +79,11 @@ udf_disk_stamp_to_time(struct timespec64 *dest, struct timestamp src)
 }
 
 void
+<<<<<<< HEAD
 udf_time_to_disk_stamp(struct timestamp *dest, struct timespec64 ts)
+=======
+udf_time_to_disk_stamp(struct timestamp *dest, struct timespec ts)
+>>>>>>> openela-lts/linux-4.14.y
 {
 	time64_t seconds;
 	int16_t offset;
