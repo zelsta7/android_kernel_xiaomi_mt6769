@@ -739,6 +739,16 @@ else
 KBUILD_CFLAGS   += -O2
 endif
 
+ifeq ($(CONFIG_MACH_MT6768),y)
+ifeq ($(cc-name),clang)
+KBUILD_CFLAGS   += -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8.2-a+lse+fp16+dotprod
+endif
+
+ifeq ($(cc-name),gcc)
+KBUILD_CFLAGS   += -mcpu=cortex-a75.cortex-a55 -mtune=cortex-a75.cortex-a55
+endif
+endif
+
 # Tell gcc to never replace conditional load with a non-conditional one
 KBUILD_CFLAGS	+= $(call cc-option,--param=allow-store-data-races=0)
 KBUILD_CFLAGS	+= $(call cc-option,-fno-allow-store-data-races)
