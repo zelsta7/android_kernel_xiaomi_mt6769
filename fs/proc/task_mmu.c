@@ -301,6 +301,7 @@ static int proc_map_release(struct inode *inode, struct file *file)
 	if (priv->mm)
 		mmdrop(priv->mm);
 
+	kfree(priv->rollup);
 	return seq_release_private(inode, file);
 }
 
@@ -468,6 +469,7 @@ const struct file_operations proc_pid_maps_operations = {
 
 #ifdef CONFIG_PROC_PAGE_MONITOR
 struct mem_size_stats {
+	bool first;
 	unsigned long resident;
 	unsigned long shared_clean;
 	unsigned long shared_dirty;
@@ -481,6 +483,7 @@ struct mem_size_stats {
 	unsigned long swap;
 	unsigned long shared_hugetlb;
 	unsigned long private_hugetlb;
+	unsigned long first_vma_start;
 	u64 pss;
 	u64 pss_locked;
 	u64 swap_pss;
@@ -855,82 +858,64 @@ static void __show_smap(struct seq_file *m, const struct mem_size_stats *mss)
 
 static int show_smap(struct seq_file *m, void *v)
 {
-	struct vm_area_struct *vma = v;
-	struct mem_size_stats mss;
-
-	memset(&mss, 0, sizeof(mss));
-
-	smap_gather_stats(vma, &mss);
-
-	show_map_vma(m, vma);
-	if (vma_get_anon_name(vma)) {
-		seq_puts(m, "Name:           ");
-		seq_print_vma_name(m, vma);
-		seq_putc(m, '\n');
-	}
-
-	seq_printf(m,
-		   "Size:           %8lu kB\n"
-		   "KernelPageSize: %8lu kB\n"
-		   "MMUPageSize:    %8lu kB\n",
-		   (vma->vm_end - vma->vm_start) >> 10,
-		   vma_kernel_pagesize(vma) >> 10,
-		   vma_mmu_pagesize(vma) >> 10);
-
-	__show_smap(m, &mss);
-
-	arch_show_smap(m, vma);
-	show_smap_vma_flags(m, vma);
-
-	m_cache_vma(m, vma);
-
-	return 0;
-}
-
-static int show_smaps_rollup(struct seq_file *m, void *v)
-{
 	struct proc_maps_private *priv = m->private;
-	struct mem_size_stats mss;
-	struct mm_struct *mm;
-	struct vm_area_struct *vma;
-	unsigned long last_vma_end = 0;
+	struct vm_area_struct *vma = v;
+	struct mem_size_stats mss_stack;
+	struct mem_size_stats *mss;
 	int ret = 0;
+	bool rollup_mode;
+	bool last_vma;
 
-	priv->task = get_proc_task(priv->inode);
-	if (!priv->task)
-		return -ESRCH;
-
-	mm = priv->mm;
-	if (!mm || !mmget_not_zero(mm)) {
-		ret = -ESRCH;
-		goto out_put_task;
+	if (priv->rollup) {
+		rollup_mode = true;
+		mss = priv->rollup;
+		if (mss->first) {
+			mss->first_vma_start = vma->vm_start;
+			mss->first = false;
+		}
+		last_vma = !m_next_vma(priv, vma);
+	} else {
+		rollup_mode = false;
+		memset(&mss_stack, 0, sizeof(mss_stack));
+		mss = &mss_stack;
 	}
 
-	memset(&mss, 0, sizeof(mss));
+	smap_gather_stats(vma, mss);
 
-	down_read(&mm->mmap_sem);
-	hold_task_mempolicy(priv);
-
-	for (vma = priv->mm->mmap; vma; vma = vma->vm_next) {
-		smap_gather_stats(vma, &mss);
-		last_vma_end = vma->vm_end;
+	if (!rollup_mode) {
+		show_map_vma(m, vma);
+		if (vma_get_anon_name(vma)) {
+			seq_puts(m, "Name:           ");
+			seq_print_vma_name(m, vma);
+			seq_putc(m, '\n');
+		}
+	} else if (last_vma) {
+		show_vma_header_prefix(
+			m, mss->first_vma_start, vma->vm_end, 0, 0, 0, 0);
+		seq_pad(m, ' ');
+		seq_puts(m, "[rollup]\n");
+	} else {
+		ret = SEQ_SKIP;
 	}
 
-	show_vma_header_prefix(m, priv->mm->mmap->vm_start,
-			       last_vma_end, 0, 0, 0, 0);
-	seq_pad(m, ' ');
-	seq_puts(m, "[rollup]\n");
+	if (!rollup_mode)
+		seq_printf(m,
+			   "Size:           %8lu kB\n"
+			   "KernelPageSize: %8lu kB\n"
+			   "MMUPageSize:    %8lu kB\n",
+			   (vma->vm_end - vma->vm_start) >> 10,
+			   vma_kernel_pagesize(vma) >> 10,
+			   vma_mmu_pagesize(vma) >> 10);
 
-	__show_smap(m, &mss);
 
-	release_task_mempolicy(priv);
-	up_read(&mm->mmap_sem);
-	mmput(mm);
+	if (!rollup_mode || last_vma)
+		__show_smap(m, mss);
 
-out_put_task:
-	put_task_struct(priv->task);
-	priv->task = NULL;
-
+	if (!rollup_mode) {
+		arch_show_smap(m, vma);
+		show_smap_vma_flags(m, vma);
+	}
+	m_cache_vma(m, vma);
 	return ret;
 }
 
@@ -946,45 +931,23 @@ static int pid_smaps_open(struct inode *inode, struct file *file)
 	return do_maps_open(inode, file, &proc_pid_smaps_op);
 }
 
-static int smaps_rollup_open(struct inode *inode, struct file *file)
+static int pid_smaps_rollup_open(struct inode *inode, struct file *file)
 {
-	int ret;
+	struct seq_file *seq;
 	struct proc_maps_private *priv;
+	int ret = do_maps_open(inode, file, &proc_pid_smaps_op);
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL_ACCOUNT);
-	if (!priv)
+	if (ret < 0)
+		return ret;
+	seq = file->private_data;
+	priv = seq->private;
+	priv->rollup = kzalloc(sizeof(*priv->rollup), GFP_KERNEL);
+	if (!priv->rollup) {
+		proc_map_release(inode, file);
 		return -ENOMEM;
-
-	ret = single_open(file, show_smaps_rollup, priv);
-	if (ret)
-		goto out_free;
-
-	priv->inode = inode;
-	priv->mm = proc_mem_open(inode, PTRACE_MODE_READ);
-	if (IS_ERR(priv->mm)) {
-		ret = PTR_ERR(priv->mm);
-
-		single_release(inode, file);
-		goto out_free;
 	}
-
+	priv->rollup->first = true;
 	return 0;
-
-out_free:
-	kfree(priv);
-	return ret;
-}
-
-static int smaps_rollup_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq = file->private_data;
-	struct proc_maps_private *priv = seq->private;
-
-	if (priv->mm)
-		mmdrop(priv->mm);
-
-	kfree(priv);
-	return single_release(inode, file);
 }
 
 const struct file_operations proc_pid_smaps_operations = {
@@ -995,10 +958,10 @@ const struct file_operations proc_pid_smaps_operations = {
 };
 
 const struct file_operations proc_pid_smaps_rollup_operations = {
-	.open		= smaps_rollup_open,
+	.open		= pid_smaps_rollup_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= smaps_rollup_release,
+	.release	= proc_map_release,
 };
 
 enum clear_refs_types {
