@@ -10,6 +10,8 @@
 #include <linux/damon.h>
 #include <linux/module.h>
 
+#include "modules-common.h"
+
 #ifdef MODULE_PARAM_PREFIX
 #undef MODULE_PARAM_PREFIX
 #endif
