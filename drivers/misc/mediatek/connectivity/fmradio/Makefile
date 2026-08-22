@@ -51,12 +51,10 @@ else
     ifneq ($(CFG_FM_CHIP_ID),)
 	# LD 1.0
 	# CFG_FM_CHIP_ID is platform chip id
-        ifeq ($(CONFIG_MTK_FM_CHIP),)
-            $(error CONFIG_MTK_FM_CHIP not defined)
-        endif
-
+        ifneq ($(CONFIG_MTK_FM_CHIP),)
         ccflags-y += -D CFG_FM_CHIP_ID=0x$(CFG_FM_CHIP_ID)
         FM_CHIP := $(subst _FM,,$(subst MT,mt,$(subst ",,$(CONFIG_MTK_FM_CHIP))))
+        endif
     else
 	# LD 2.0
 	# Cannot get platform chip id in LD 2.0
