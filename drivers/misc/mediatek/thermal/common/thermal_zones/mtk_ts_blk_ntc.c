@@ -557,7 +557,8 @@ static __s16 mtk_ts_bts_volt_to_temp(__u32 dwVolt)
 	 * dwVCriAP = (TAP_OVER_CRITICAL_LOW * RAP_PULL_UP_VOLT) /
 	 *		(TAP_OVER_CRITICAL_LOW + RAP_PULL_UP_R);
 	 */
-	pr_notice("[mtk_ts_bts_volt_to_temp]dwVolt1 =%d\n", dwVolt);
+	/* her sicaklik okumasinda basiliyordu */
+	pr_debug("[mtk_ts_bts_volt_to_temp]dwVolt1 =%d\n", dwVolt);
 	blk_ntc_volt = dwVolt;//xujia add for blk ntc compatible
 	dwVCriAP = (g_TAP_over_critical_low * g_RAP_pull_up_voltage)
 		/ (g_TAP_over_critical_low + g_RAP_pull_up_R);
@@ -671,7 +672,7 @@ int mtkts_blkntc_get_hw_temp(void)
 	mutex_unlock(&BTS_BLKNTC_lock);
 
 	if (t_ret > 40000)	/* abnormal high temp */
-		mtkts_blkntc_printk("T_BLKNTC=%d\n", t_ret);
+		mtkts_blkntc_dprintk("T_BLKNTC=%d\n", t_ret);
 
 	mtkts_blkntc_dprintk("[mtkts_blkntc_get_hw_temp] T_BLKNTC, %d\n", t_ret);
 	return t_ret;

@@ -1401,8 +1401,13 @@ static int bq2589x_charging(struct charger_device *chg_dev, bool enable)
 	else
 		ret = bq2589x_disable_charger(bq);
 
-	pr_err("%s charger %s\n", enable ? "enable" : "disable",
-	       !ret ? "successfully" : "failed");
+	/* basarisizlik hata; basari ayiklama seviyesinde */
+	if (ret)
+		pr_err("%s charger failed\n",
+		       enable ? "enable" : "disable");
+	else
+		pr_debug("%s charger successfully\n",
+		         enable ? "enable" : "disable");
 
 	ret = bq2589x_read_byte(bq, BQ2589X_REG_03, &val);
 
@@ -1561,7 +1566,7 @@ static int bq2589x_set_icl(struct charger_device *chg_dev, u32 curr)
 	if(curr == 0) {
 		curr = 2000000;
     }
-	pr_err("indpm curr = %d\n", curr);
+	pr_debug("indpm curr = %d\n", curr);
 
 	return bq2589x_set_input_current_limit(bq, curr / 1000);
 }
@@ -1607,8 +1612,11 @@ static int bq2589x_set_otg(struct charger_device *chg_dev, bool en)
 	else
 		ret = bq2589x_disable_otg(bq);
 
-	pr_err("%s OTG %s\n", en ? "enable" : "disable",
-	       !ret ? "successfully" : "failed");
+	if (ret)
+		pr_err("%s OTG failed\n", en ? "enable" : "disable");
+	else
+		pr_debug("%s OTG successfully\n",
+		         en ? "enable" : "disable");
 
 	return ret;
 }
@@ -1646,7 +1654,7 @@ static int bq2589x_set_boost_ilmt(struct charger_device *chg_dev, u32 curr)
 	struct bq2589x *bq = dev_get_drvdata(&chg_dev->dev);
 	int ret;
 
-	pr_err("otg curr = %d\n", curr);
+	pr_debug("otg curr = %d\n", curr);
 
 	ret = bq2589x_set_boost_current(bq, curr / 1000);
 

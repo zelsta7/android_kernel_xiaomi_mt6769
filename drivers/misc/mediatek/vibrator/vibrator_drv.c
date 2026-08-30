@@ -90,7 +90,7 @@ static void vibrator_enable(unsigned int dur, unsigned int activate)
 	spin_lock_irqsave(&g_mt_vib->vibr_lock, flags);
 	hrtimer_cancel(&g_mt_vib->vibr_timer);
 	cancel_work(&g_mt_vib->vibr_onwork);
-	pr_info(VIB_TAG "cancel hrtimer, cust:%dms, value:%u, activate:%d, shutdown:%d\n",
+	pr_debug(VIB_TAG "cancel hrtimer, cust:%dms, value:%u, activate:%d, shutdown:%d\n",
 			hw->vib_timer, dur, activate, g_mt_vib->shutdown_flag);
 
 	if (activate == 0 || g_mt_vib->shutdown_flag == 1) {

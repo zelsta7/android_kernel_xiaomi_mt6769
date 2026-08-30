@@ -480,7 +480,8 @@ static irqreturn_t fpc1022_irq_handler(int irq, void *handle)
 
 	/* Make sure 'wakeup_enabled' is updated before using it
 	 ** since this is interrupt context (other thread...) */
-	printk("fpc1022_irq_handler");
+	/* kesme isleyicisinde ciplak printk idi (satir sonu bile yoktu) */
+	pr_debug("fpc1022_irq_handler\n");
 	smp_rmb();
 
 	/* if (fpc1022->wakeup_enabled) { */
@@ -488,7 +489,8 @@ static irqreturn_t fpc1022_irq_handler(int irq, void *handle)
 	/* } */
 
 	/* begin modify for unlock speed */
-	printk("%s fastScreenOn wait_finger_down = %d, fb_black = %d \n", __func__,
+	/* kesme isleyicisi icinde her IRQ da basiyordu */
+	pr_debug("%s wait_finger_down = %d, fb_black = %d\n", __func__,
 			fpc1022->wait_finger_down, fpc1022->fb_black);
 	if (fpc1022->wait_finger_down && fpc1022->fb_black) {
 			fpc1022->wait_finger_down = false;

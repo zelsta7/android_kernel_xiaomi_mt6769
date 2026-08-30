@@ -183,7 +183,11 @@
  * show debug log info
  * enable it for debug, disable it for release
  */
-#define FTS_DEBUG_EN                            1
+/* Acik geliyordu: ekran kapaliyken bile "In suspend, not check esd"
+ * gibi satirlar ve her dokunusta rapor ciktisi uretiyordu (120 sn'de
+ * ~150 satir). Surucunun kendi anahtari; FTS_INFO ve FTS_ERROR
+ * etkilenmiyor. */
+#define FTS_DEBUG_EN                            0
 
 /*
  * Linux MultiTouch Protocol
