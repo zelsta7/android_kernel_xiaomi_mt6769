@@ -20,6 +20,7 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/printk.h>
 #include <linux/types.h>
 #include <linux/kobject.h>
@@ -52,12 +53,37 @@ static int mtk_cl_backlight_get_cur_state
 	return 0;
 }
 
+/*
+ * Termal kisitlama ekrani KARARTMAMALI.
+ *
+ * Bu surucu gelen sogutma durumunu dogrudan parlaklik tavani olarak
+ * geciriyor: userspace 0 yazdiginda tavan 0 olur ve ekran tamamen
+ * soner -- kullanici telefonun kendi kendine ekrani kapattigini gorur.
+ * MTK'nin standart surucusu (mtk_cooler_backlight.c) en dusuk
+ * kademede bile %10'da duruyor; bu 'cus' varyantinda o taban yok.
+ *
+ * Isil koruma AYNEN devam ediyor: CPU, GPU ve sarj kisitlamalari
+ * ayri sogutma aygitlarinda ve onlara dokunulmadi. Burada yalnizca
+ * ekranin okunabilir kalmasi garanti ediliyor.
+ *
+ * backlight_floor=0 yazilarak eski davranisa donulebilir:
+ *   /sys/module/mtk_cooler_backlight_cus/parameters/backlight_floor
+ */
+static unsigned int backlight_floor = MAX_BACKLIGHT_BRIGHTNESS / 10;
+module_param(backlight_floor, uint, 0644);
+MODULE_PARM_DESC(backlight_floor,
+	"termal kisitlamada izin verilen en dusuk parlaklik tavani (0 = taban yok)");
+
 static int mtk_cl_backlight_set_cur_state
 (struct thermal_cooling_device *cdev, unsigned long state)
 {
-	int enable = (state == MAX_BACKLIGHT_BRIGHTNESS) ? 0 : 1;
+	int enable;
 
-	printk("[%s]: --lyd_thmal, set max brightness = %ld\n", __func__, state);
+	if (state < backlight_floor)
+		state = backlight_floor;
+
+	enable = (state == MAX_BACKLIGHT_BRIGHTNESS) ? 0 : 1;
+
 	setMaxbrightness(state, enable);
 	g_backlight_level = state;
 	mtk_cooler_backlight_dprintk("%u\n", g_backlight_level);

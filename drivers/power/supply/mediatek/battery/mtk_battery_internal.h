@@ -108,7 +108,19 @@ do {\
 	}						\
 } while (0)
 
-#define BM_DAEMON_DEFAULT_LOG_LEVEL 8
+/*
+ * Varsayilan 8 (TRACE) geliyordu: azami ayrinti. Olculdu -- dmesg'in
+ * %59'u (5417 satirin 3180'i) yalnizca yakit gostergesi izlerinden
+ * olusuyordu. Bu hem gercek arizalari log icinde gorunmez yapiyor
+ * hem de printk bosuna CPU/guc yiyor.
+ *
+ * 4 (WARNING): bm_err ve bm_warn korunur; bm_notice, bm_info, bm_debug ve
+ * bm_trace susar. Olculdu: 5 hala yetmiyordu, force_get_tbat ve
+ * BattVoltToTemp bm_notice seviyesinde saniyede ~2 satir basiyordu.
+ * Mekanizma MTK.nin kendisinin; yalnizca varsayilani makul bir yere cekiyoruz.
+ * Calisma aninda: /sys/devices/platform/battery/FG_daemon_log_level
+ */
+#define BM_DAEMON_DEFAULT_LOG_LEVEL 4
 
 enum gauge_hw_version {
 	GAUGE_HW_V1000 = 1000,
