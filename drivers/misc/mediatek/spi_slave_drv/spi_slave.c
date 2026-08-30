@@ -106,6 +106,22 @@ static struct mtk_spi_slave_data slv_data = {
 	.tx_nbits = 0,
 	.rx_nbits = 0,
 };
+
+/*
+ * slv_data.spi yalnizca SPI slave probe'unda atanir. Aygit
+ * baglanmazsa NULL kalir ve spi_sync() onu basvurur: tek bir cevre
+ * birimi yuzunden TUM boot panikliyor. Cagiranlar zaten hata kodunu
+ * kontrol ediyor, eksik olan tek sey aygitin var olup olmadigi.
+ */
+static int spislv_spi_sync(struct spi_message *msg)
+{
+	if (!slv_data.spi) {
+		pr_notice("%s: spi slave baglanmadi\n", __func__);
+		return -ENODEV;
+	}
+
+	return spi_sync(slv_data.spi, msg);
+}
 /*
  * A piece of default chip info unless the platform
  * supplies it.
@@ -163,7 +179,7 @@ static int spislv_sync_sub(u32 addr, void *val, u32 len, bool is_read)
 	rx_cmd_read_sta[1] = 0;
 	spi_message_add_tail(&RS_TRANSFER, &msg);
 
-	ret = spi_sync(slv_data.spi, &msg);
+	ret = spislv_spi_sync(&msg);
 	if (ret)
 		goto tail;
 
@@ -212,7 +228,7 @@ static int spislv_sync_sub(u32 addr, void *val, u32 len, bool is_read)
 	/* RS */
 	rx_cmd_read_sta[1] = 0;
 	spi_message_add_tail(&RS_TRANSFER, &msg);
-	ret = spi_sync(slv_data.spi, &msg);
+	ret = spislv_spi_sync(&msg);
 	if (ret)
 		goto tail;
 
@@ -235,7 +251,7 @@ static int spislv_sync_sub(u32 addr, void *val, u32 len, bool is_read)
 		x[2].speed_hz	= slv_data.tx_speed_hz;
 		spi_message_init(&msg);
 		spi_message_add_tail(&x[2], &msg);
-		ret = spi_sync(slv_data.spi, &msg);
+		ret = spislv_spi_sync(&msg);
 		if (ret)
 			goto tail;
 
@@ -255,7 +271,7 @@ static int spislv_sync_sub(u32 addr, void *val, u32 len, bool is_read)
 			rx_cmd_read_sta[1] = 0;
 			spi_message_init(&msg);
 			spi_message_add_tail(&RS_TRANSFER, &msg);
-			ret = spi_sync(slv_data.spi, &msg);
+			ret = spislv_spi_sync(&msg);
 			if (ret)
 				goto tail;
 			status = rx_cmd_read_sta[1];
@@ -328,7 +344,7 @@ int spislv_init(void)
 
 	spi_message_init(&msg);
 	spi_message_add_tail(&CT_TRANSFER, &msg);
-	ret = spi_sync(slv_data.spi, &msg);
+	ret = spislv_spi_sync(&msg);
 	if (ret)
 		return ret;
 

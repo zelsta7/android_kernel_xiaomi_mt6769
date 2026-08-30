@@ -77,6 +77,23 @@ const char *uname, int depth, void *data)
 			(struct dram_info *)of_get_flat_dt_prop(node,
 				"orig_dram_info", NULL);
 
+
+		/*
+		 * Onyukleyici "orig_dram_info" ozelligini vermeyebilir
+		 * (ozel LK, farkli DTB yolu, kurtarma imaji). Kontrolsuz
+		 * basvuru erken boot'ta NULL panigi uretiyor -- konsol
+		 * acilmadan once oldugu icin iz de birakmiyor.
+		 *
+		 * Bu dosyanin geri kalani get_dram_info'nun NULL
+		 * olabilecegini ZATEN varsayiyor (mt_dramc_rankbase_get),
+		 * ve MTK'nin kendi mt6885 varyanti burada donuyor;
+		 * mt6768 kopyasinda kontrol dusmus. Geri konuyor.
+		 */
+		if (!get_dram_info) {
+			dramc_info("orig_dram_info yok, dummy read atlaniyor\n");
+			return 0;
+		}
+
 		g_dram_info_dummy_read = &dram_info_dummy_read;
 		dram_rank_num = get_dram_info->rank_num;
 		dram_info_dummy_read.rank_num = dram_rank_num;

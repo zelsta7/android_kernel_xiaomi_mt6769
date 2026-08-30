@@ -679,6 +679,18 @@ static int __init upower_get_tbl_ref(void)
 		     (unsigned long long)upower_data_phy_addr,
 		     (unsigned long long)upower_data_virt_addr);
 
+	/*
+	 * sspm_reserve_mem_get_virt() ayrilmis bellek yoksa 0 donuyor.
+	 * Kontrolsuz kullanim asagidaki temizleme dongusunu NULL'a
+	 * yazdiriyor ve cekirdek erken boot'ta panikliyor. Onyukleyici
+	 * SSPM bolgesini kurmadiginda (farkli LK, farkli DTB) bu yol
+	 * gercekten yuruyor.
+	 */
+	if (!upower_data_virt_addr || !upower_data_size) {
+		pr_err("[UPOWER] sspm ayrilmis bellegi yok, upower atlaniyor\n");
+		return -ENODEV;
+	}
+
 	/* clear */
 	ptr = (unsigned char *)(uintptr_t)upower_data_virt_addr;
 	for (i = 0; i < upower_data_size; i++)

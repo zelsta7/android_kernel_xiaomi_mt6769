@@ -94,6 +94,21 @@ void pmic_enable_interrupt(enum PMIC_IRQ_ENUM intNo, unsigned int en, char *str)
 	struct legacy_pmic_callback *pmic_cb = &pmic_cbs[intNo];
 	struct irq_desc *desc;
 
+	/*
+	 * pmic_dev yalnizca PMIC probe'unda atanir. pwrap acilmazsa
+	 * (farkli DTB, donanim hatasi) NULL kalir ve asagidaki
+	 * pmic_dev->parent tam olarak adres 0'i okur: 'parent',
+	 * struct device'in ILK uyesi. Bu fonksiyon intNo, callback,
+	 * irq ve name icin zaten dort ayri kontrol yapiyor; eksik olan
+	 * tek sey aygitin var olup olmadigi. Kontrol edilmeyince
+	 * cagiran surucunun probe'u basarisiz olmak yerine TUM boot
+	 * panikliyor.
+	 */
+	if (!pmic_dev) {
+		pr_notice(PMICTAG "[%s] pmic not probed, intNo=%d\n",
+			__func__, intNo);
+		return;
+	}
 	if (intNo == INT_ENUM_MAX) {
 		pr_notice(PMICTAG "[%s] disable intNo=%d\n", __func__, intNo);
 		return;
