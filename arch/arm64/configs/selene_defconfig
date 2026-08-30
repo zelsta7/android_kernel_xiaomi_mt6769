@@ -501,7 +501,7 @@ CONFIG_LD_DEAD_CODE_DATA_ELIMINATION=y
 
 CONFIG_NOMOUNT=y
 CONFIG_CRYPTO_ZSTD=y
-CONFIG_LOCALVERSION="-LittleSpammyMailman-legacy-v0.1-pre"
+CONFIG_LOCALVERSION="-LittleSpammyMailman-2026.8.30-r"
 # CONFIG_LOCALVERSION_AUTO is not set
 
 # --- KernelSU-Next (v3.1.0-legacy-susfs) ---
