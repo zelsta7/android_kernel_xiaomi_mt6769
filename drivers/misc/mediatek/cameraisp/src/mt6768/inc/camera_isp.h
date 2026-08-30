@@ -806,6 +806,17 @@ enum ISP_HALT_DMA_ENUM {
 #define ISP_SET_SEC_ENABLE \
 	_IOW(ISP_MAGIC, ISP_CMD_SET_SEC_ENABLE, unsigned int)
 
+/*
+ * Kamera HAL'inin cekim sirasinda cagirdigi sanal CQ sayaci komutu.
+ * Numara CIHAZDA OLCULDU: 0xc0046b2c = _IOWR(k, 44, 4 bayt).
+ * Enum'da 44 = ISP_CMD_SET_SEC_DAPC_REG, ama o _IOW (0x40046b2c);
+ * bu _IOWR oldugu icin degerler cakismiyor. Enum'a uye eklemek
+ * diger komutlarin numaralarini kaydiracagindan numara sabit.
+ */
+#define ISP_CMD_SET_VIR_CQCNT_NR	44
+#define ISP_SET_VIR_CQCNT \
+	_IOWR(ISP_MAGIC, ISP_CMD_SET_VIR_CQCNT_NR, unsigned int)
+
 #ifdef CONFIG_COMPAT
 #define COMPAT_ISP_READ_REGISTER      \
 	_IOWR(ISP_MAGIC, ISP_CMD_READ_REG,      struct compat_ISP_REG_IO_STRUCT)

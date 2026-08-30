@@ -7251,6 +7251,10 @@ static void ISP_ion_free_handle_by_module(unsigned int module)
 /******************************************************************************
  *
  *****************************************************************************/
+/* HAL'in bildirdigi sanal CQ sayaci (donanim modulu basina). */
+static unsigned int g_virtual_cq_cnt[ISP_IRQ_TYPE_INT_CAM_B_ST -
+			ISP_IRQ_TYPE_INT_CAM_A_ST + 1];
+
 static long ISP_ioctl(struct file *pFile, unsigned int Cmd, unsigned long Param)
 {
 	signed int Ret = 0;
@@ -9003,9 +9007,28 @@ static long ISP_ioctl(struct file *pFile, unsigned int Cmd, unsigned long Param)
 		}
 		LOG_DBG("ISP_SET_SEC_ENABLE sec_on = %d\n", sec_on);
 		break;
+	case ISP_SET_VIR_CQCNT: {
+		unsigned int _cq_cnt[2] = {0};
+
+		if (copy_from_user(&_cq_cnt, (void *)Param,
+			sizeof(unsigned int) * 2) == 0) {
+			if (_cq_cnt[0] <= (ISP_IRQ_TYPE_INT_CAM_B_ST -
+				ISP_IRQ_TYPE_INT_CAM_A_ST))
+				g_virtual_cq_cnt[_cq_cnt[0]] = _cq_cnt[1];
+			else
+				LOG_INF("VirCQ: gecersiz HW modul(%d)\n",
+					_cq_cnt[0]);
+		} else {
+			LOG_INF("VirCQ: copy_from_user basarisiz\n");
+			Ret = -EFAULT;
+		}
+	} break;
 	default:
 	{
-		LOG_DBG("Unknown Cmd(%d)\n", Cmd);
+		/* Reddedilen ioctl numarasini gorunur yapar: HAL ile surucu arasindaki
+		 * komut uyusmazliklarini teshis etmenin tek yolu bu. Hiz sinirli. */
+		pr_info_ratelimited("[ISP] Unknown Cmd(0x%08x) nr=%u size=%u dir=%u\n",
+			Cmd, _IOC_NR(Cmd), _IOC_SIZE(Cmd), _IOC_DIR(Cmd));
 		Ret = -EPERM;
 		break;
 	}
