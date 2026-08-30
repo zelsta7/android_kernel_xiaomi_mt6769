@@ -1,0 +1,66 @@
+diff --git a/kernel/setuid_hook.c b/kernel/setuid_hook.c
+index f9e26a12..1f6a2bd5 100644
+--- a/kernel/setuid_hook.c
++++ b/kernel/setuid_hook.c
+@@ -53,12 +53,11 @@ static inline bool is_zygote_normal_app_uid(uid_t uid)
+ }
+ 
+ extern u32 susfs_zygote_sid;
+-#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+-extern void susfs_run_sus_path_loop(uid_t uid);
+-#endif // #ifdef CONFIG_KSU_SUSFS_SUS_PATH
+-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+-extern void susfs_reorder_mnt_id(void);
+-#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
++/*
++ * susfs v2.2.0: susfs_run_sus_path_loop() static ve parametresiz,
++ * susfs_reorder_mnt_id() ise hic yok -- ikisi de artik DAHILI.
++ * Bu yuzden extern bildirimleri kaldirildi.
++ */
+ #ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
+ extern void susfs_try_umount(uid_t uid);
+ #endif // #ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
+@@ -148,14 +147,10 @@ do_umount:
+ #else
+     susfs_try_umount(new_uid);
+ #endif // #ifndef CONFIG_KSU_SUSFS_TRY_UMOUNT
+-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+-    // We can reorder the mnt_id now after all sus mounts are umounted
+-    susfs_reorder_mnt_id();
+-#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+-
+-#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+-    susfs_run_sus_path_loop(new_uid);
+-#endif // #ifdef CONFIG_KSU_SUSFS_SUS_PATH
++    /*
++     * susfs v2.2.0 mnt_id sirasini ve sus_path dongusunu kendi
++     * icinde yonetiyor; buradan tetiklemeye gerek yok.
++     */
+ 
+     susfs_set_current_proc_umounted();
+ 
+diff --git a/kernel/supercalls.c b/kernel/supercalls.c
+index 7b127ea6..0cc34b70 100644
+--- a/kernel/supercalls.c
++++ b/kernel/supercalls.c
+@@ -867,12 +867,14 @@ int ksu_handle_sys_reboot(int magic1, int magic2, unsigned int cmd,
+             susfs_add_sus_path_loop(arg);
+             return 0;
+         }
+-        if (cmd == CMD_SUSFS_SET_ANDROID_DATA_ROOT_PATH) {
+-            susfs_set_i_state_on_external_dir(arg);
+-            return 0;
+-        }
+-        if (cmd == CMD_SUSFS_SET_SDCARD_ROOT_PATH) {
+-            susfs_set_i_state_on_external_dir(arg);
++        /*
++         * susfs v2.2.0 (bu agacta gelen surum) harici dizinleri
++         * susfs_sdcard_monitor kthread'i ile KENDI izliyor;
++         * v2.0.0'daki susfs_set_i_state_on_external_dir() kaldirilmis.
++         * Komutlari kabul edip yok sayiyoruz.
++         */
++        if (cmd == CMD_SUSFS_SET_ANDROID_DATA_ROOT_PATH ||
++            cmd == CMD_SUSFS_SET_SDCARD_ROOT_PATH) {
+             return 0;
+         }
+ #endif //#ifdef CONFIG_KSU_SUSFS_SUS_PATH
