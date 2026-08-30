@@ -540,3 +540,31 @@ CONFIG_TCP_CONG_BBR=y
 CONFIG_DEFAULT_BBR=y
 CONFIG_DEFAULT_TCP_CONG="bbr"
 CONFIG_NET_SCH_FQ_CODEL=y
+
+# --- Zamanlayici tepkiselligi ---
+# PELT yari omru 32 -> 16 ms: kullanim takibi ~2 kat hizli tirmaniyor,
+# schedutil ve gorev yerlestirme yuke daha cabuk tepki veriyor.
+# Tablolar agacta ZATEN vardi (kernel/sched/sched-pelt.h); yeniden
+# uretilmedi, yalnizca 16 ms olani secildi.
+# CONFIG_PELT_UTIL_HALFLIFE_32 is not set
+CONFIG_PELT_UTIL_HALFLIFE_16=y
+
+# 250 -> 300 Hz: Android tarafinda yaygin secim.
+# Zamanlayici granuleri 4 ms -> 3,33 ms.
+# CONFIG_HZ_250 is not set
+CONFIG_HZ_300=y
+CONFIG_HZ=300
+
+# --- Telefonda karsiligi olmayan ozellikler ---
+# ISO9660 uzantilari: cihazda optik ortam yok.
+# CONFIG_JOLIET is not set
+# CONFIG_ZISOFS is not set
+# Eski 8.3 FAT surucusu. SD/USB icin VFAT kullaniliyor, o ACIK kaliyor.
+# CONFIG_MSDOS_FS is not set
+# Hata enjeksiyonu: yalnizca cekirdek gelistirme icin.
+# CONFIG_FAULT_INJECTION is not set
+# Her frekans gecisinde sayac guncelleyen sysfs istatistikleri.
+# CONFIG_CPU_FREQ_STAT is not set
+# Eski ALSA API uyumlulugu ve ayrintili ses procfs.
+# CONFIG_SND_SUPPORT_OLD_API is not set
+# CONFIG_SND_VERBOSE_PROCFS is not set
