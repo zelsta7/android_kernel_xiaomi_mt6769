@@ -7251,9 +7251,15 @@ static void ISP_ion_free_handle_by_module(unsigned int module)
 /******************************************************************************
  *
  *****************************************************************************/
-/* HAL'in bildirdigi sanal CQ sayaci (donanim modulu basina). */
-static unsigned int g_virtual_cq_cnt[ISP_IRQ_TYPE_INT_CAM_B_ST -
-			ISP_IRQ_TYPE_INT_CAM_A_ST + 1];
+/*
+ * HAL'in bildirdigi sanal CQ sayaci. Xiaomi'nin resmi selene
+ * kaynagindaki uygulama: [0]=hw modul, [1]=sayac; modul basina
+ * _a/_b kopyalari ISR'den okundugu icin spinlock ile korunuyor.
+ */
+static unsigned int g_virtual_cq_cnt[2] = {0, 0};
+static unsigned int g_virtual_cq_cnt_a;
+static unsigned int g_virtual_cq_cnt_b;
+static spinlock_t virtual_cqcnt_lock;
 
 static long ISP_ioctl(struct file *pFile, unsigned int Cmd, unsigned long Param)
 {
@@ -9007,22 +9013,19 @@ static long ISP_ioctl(struct file *pFile, unsigned int Cmd, unsigned long Param)
 		}
 		LOG_DBG("ISP_SET_SEC_ENABLE sec_on = %d\n", sec_on);
 		break;
-	case ISP_SET_VIR_CQCNT: {
-		unsigned int _cq_cnt[2] = {0};
-
-		if (copy_from_user(&_cq_cnt, (void *)Param,
-			sizeof(unsigned int) * 2) == 0) {
-			if (_cq_cnt[0] <= (ISP_IRQ_TYPE_INT_CAM_B_ST -
-				ISP_IRQ_TYPE_INT_CAM_A_ST))
-				g_virtual_cq_cnt[_cq_cnt[0]] = _cq_cnt[1];
-			else
-				LOG_INF("VirCQ: gecersiz HW modul(%d)\n",
-					_cq_cnt[0]);
-		} else {
+	case ISP_SET_VIR_CQCNT:
+		spin_lock((spinlock_t *)(&virtual_cqcnt_lock));
+		if (copy_from_user(&g_virtual_cq_cnt, (void *)Param,
+			sizeof(unsigned int) * 2) != 0) {
 			LOG_INF("VirCQ: copy_from_user basarisiz\n");
 			Ret = -EFAULT;
 		}
-	} break;
+		if (g_virtual_cq_cnt[0] == 0)
+			g_virtual_cq_cnt_a = g_virtual_cq_cnt[1];
+		else if (g_virtual_cq_cnt[0] == 1)
+			g_virtual_cq_cnt_b = g_virtual_cq_cnt[1];
+		spin_unlock((spinlock_t *)(&virtual_cqcnt_lock));
+		break;
 	default:
 	{
 		/* Reddedilen ioctl numarasini gorunur yapar: HAL ile surucu arasindaki
@@ -10402,6 +10405,7 @@ static signed int ISP_probe(struct platform_device *pDev)
 		}
 		spin_lock_init(&(IspInfo.SpinLockRTBC));
 		spin_lock_init(&(IspInfo.SpinLockClock));
+		spin_lock_init(&(virtual_cqcnt_lock));
 
 		spin_lock_init(&(SpinLock_P2FrameList));
 		spin_lock_init(&(SpinLockRegScen));
@@ -14891,9 +14895,22 @@ LB_CAMA_SOF_IGNORE:
 	spin_unlock(&(IspInfo.SpinLockIrq[module]));
 	/*  */
 	if (IrqStatus & SOF_INT_ST) {
-		wake_up_interruptible(&IspInfo.WaitQHeadCam
-			[ISP_GetWaitQCamIndex(module)]
-			[ISP_WAITQ_HEAD_IRQ_SOF]);
+		/*
+		 * SOF yalnizca donanimdaki fiziksel CQ sayaci HAL'in
+		 * bildirdigi sanal sayaca ESITSE bildirilir. Kosulsuz
+		 * uyandirmak HAL'in kare senkronizasyonunu bozuyordu.
+		 */
+		if ((ISP_RD32(CAM_REG_CTL_SPARE2(reg_module)) % 0x100)
+			!= g_virtual_cq_cnt_a) {
+			IRQ_LOG_KEEPER(module, m_CurrentPPB, _LOG_INF,
+			"CAMA PHY cqcnt:%d != VIR cqcnt:%d\n",
+			(ISP_RD32(CAM_REG_CTL_SPARE2(reg_module)) % 0x100),
+			g_virtual_cq_cnt_a);
+		} else {
+			wake_up_interruptible(&IspInfo.WaitQHeadCam
+				[ISP_GetWaitQCamIndex(module)]
+				[ISP_WAITQ_HEAD_IRQ_SOF]);
+		}
 	}
 	if (IrqStatus & SW_PASS1_DON_ST) {
 		wake_up_interruptible(&IspInfo.WaitQHeadCam
@@ -15500,9 +15517,22 @@ LB_CAMB_SOF_IGNORE:
 	spin_unlock(&(IspInfo.SpinLockIrq[module]));
 	/*  */
 	if (IrqStatus & SOF_INT_ST) {
-		wake_up_interruptible(&IspInfo.WaitQHeadCam
-			[ISP_GetWaitQCamIndex(module)]
-			[ISP_WAITQ_HEAD_IRQ_SOF]);
+		/*
+		 * SOF yalnizca donanimdaki fiziksel CQ sayaci HAL'in
+		 * bildirdigi sanal sayaca ESITSE bildirilir. Kosulsuz
+		 * uyandirmak HAL'in kare senkronizasyonunu bozuyordu.
+		 */
+		if ((ISP_RD32(CAM_REG_CTL_SPARE2(reg_module)) % 0x100)
+			!= g_virtual_cq_cnt_b) {
+			IRQ_LOG_KEEPER(module, m_CurrentPPB, _LOG_INF,
+			"CAMB PHY cqcnt:%d != VIR cqcnt:%d\n",
+			(ISP_RD32(CAM_REG_CTL_SPARE2(reg_module)) % 0x100),
+			g_virtual_cq_cnt_b);
+		} else {
+			wake_up_interruptible(&IspInfo.WaitQHeadCam
+				[ISP_GetWaitQCamIndex(module)]
+				[ISP_WAITQ_HEAD_IRQ_SOF]);
+		}
 	}
 	if (IrqStatus & SW_PASS1_DON_ST) {
 		wake_up_interruptible(&IspInfo.WaitQHeadCam
