@@ -562,9 +562,3 @@ CONFIG_HZ=300
 # Eski ALSA API uyumlulugu ve ayrintili ses procfs.
 # CONFIG_SND_SUPPORT_OLD_API is not set
 # CONFIG_SND_VERBOSE_PROCFS is not set
-
-# CONFIG_KPROBES is not set
-# CONFIG_HAVE_KPROBES is not set
-# CONFIG_KPROBE_EVENTS is not set
-
-
