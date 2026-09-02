@@ -96,7 +96,22 @@ struct lcm_setting_table {
 	unsigned char para_list[256];
 };
 
-#define MM_CLK			405 //fpga=26
+/* Huaqin modify for K19S-31 by jiangyue at 2022/01/14 start */
+int mtk_mm_clk = 0;
+int mtk_rxtx_ratio = 0;
+extern char *saved_command_line;
+int mtk_panel_compare(void)
+{
+	if (strstr(saved_command_line, "dsi_panel_k19a_43_02_0b_dsc_vdo_lcm_drv")) {
+		mtk_mm_clk = 405;
+		mtk_rxtx_ratio = 232;
+	} else {
+		mtk_mm_clk = 270;
+		mtk_rxtx_ratio = 225;
+	}
+	return 0;
+}
+/* Huaqin modify for K19S-31 by jiangyue at 2022/01/14 end */
 #define NS_TO_CYCLE(n, c)	((n) / (c) + (((n) % (c)) ? 1 : 0))
 
 #define DSI_MODULE_to_ID(x)	(x == DISP_BDG_DSI0 ? 0 : 1)
