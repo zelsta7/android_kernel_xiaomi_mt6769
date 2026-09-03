@@ -501,8 +501,14 @@ CONFIG_LD_DEAD_CODE_DATA_ELIMINATION=y
 
 CONFIG_NOMOUNT=y
 CONFIG_CRYPTO_ZSTD=y
-CONFIG_LOCALVERSION="-LittleSpammyMailman-2026.8.30-r"
+CONFIG_LOCALVERSION="GoonKernel-2026.09.03-s"
 # CONFIG_LOCALVERSION_AUTO is not set
+
+# --- KernelSU-Next (v3.3.0-legacy-susfs) ---
+# 4.14 icin MANUEL hook: KSU Kconfig i kprobes/tracepoint hook u icin
+# "should not be used on kernel below 5.10" diyor.
+CONFIG_KSU=y
+CONFIG_KSU_MANUAL_HOOK=y
 
 # --- SuSFS (cekirdek tarafi v2.2.0 NON-GKI, agacta hazir geldi) ---
 CONFIG_KSU_SUSFS=y
