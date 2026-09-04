@@ -1062,7 +1062,7 @@ static void mark_wakeup_next_waiter(struct wake_q_head *wake_q,
 /*
  * Remove a waiter from a lock and give up
  *
- * Must be called with lock->wait_lock held and interrupts disabled. I must
+ * Must be called with lock->wait_lock held and interrupts disabled. It must
  * have just failed to try_to_take_rt_mutex().
  *
  * When invoked from rt_mutex_start_proxy_lock() waiter::task != current !
