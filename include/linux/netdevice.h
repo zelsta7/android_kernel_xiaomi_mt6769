@@ -587,9 +587,6 @@ struct netdev_queue {
 #ifdef CONFIG_XDP_SOCKETS
 	struct xdp_umem         *umem;
 #endif
-#ifdef CONFIG_XDP_SOCKETS
-	struct xdp_umem         *umem;
-#endif
 /*
  * write-mostly part
  */
@@ -713,9 +710,6 @@ struct netdev_rx_queue {
 	struct kobject			kobj;
 	struct net_device		*dev;
 	struct xdp_rxq_info		xdp_rxq;
-#ifdef CONFIG_XDP_SOCKETS
-	struct xdp_umem                 *umem;
-#endif
 #ifdef CONFIG_XDP_SOCKETS
 	struct xdp_umem                 *umem;
 #endif
@@ -2595,7 +2589,6 @@ int dev_loopback_xmit(struct net *net, struct sock *sk, struct sk_buff *newskb);
 
 int dev_queue_xmit(struct sk_buff *skb);
 int dev_queue_xmit_accel(struct sk_buff *skb, void *accel_priv);
-int dev_direct_xmit(struct sk_buff *skb, u16 queue_id);
 int __dev_direct_xmit(struct sk_buff *skb, u16 queue_id);
 
 static inline int dev_direct_xmit(struct sk_buff *skb, u16 queue_id)
