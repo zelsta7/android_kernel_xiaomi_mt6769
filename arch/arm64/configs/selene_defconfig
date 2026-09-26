@@ -541,7 +541,7 @@ CONFIG_DEFAULT_BBR=y
 CONFIG_DEFAULT_TCP_CONG="bbr"
 CONFIG_NET_SCH_FQ_CODEL=y
 
-# --- Zamanlayici tepkiselligi ---
+CONFIG_SECURITY_SELINUX_BOOTPARAM=y
 # PELT yari omru 32 -> 16 ms: kullanim takibi ~2 kat hizli tirmaniyor,
 # schedutil ve gorev yerlestirme yuke daha cabuk tepki veriyor.
 # Tablolar agacta ZATEN vardi (kernel/sched/sched-pelt.h); yeniden
@@ -568,3 +568,5 @@ CONFIG_HZ=300
 # Eski ALSA API uyumlulugu ve ayrintili ses procfs.
 # CONFIG_SND_SUPPORT_OLD_API is not set
 # CONFIG_SND_VERBOSE_PROCFS is not set
+
+CONFIG_SECURITY_SELINUX_BOOTPARAM=y
