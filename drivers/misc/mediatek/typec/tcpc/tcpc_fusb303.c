@@ -2464,8 +2464,10 @@ static int fusb303_probe(struct i2c_client *client,
 	ret = fusb303_read_device_id(chip);
 	if (ret != FUSB303_REV) {
 		dev_err(cdev, "fusb303 not support\n");
+		if (ret >= 0)
+			ret = -ENODEV;
 		goto err1;
-	}
+}
 	data = devm_kzalloc(cdev,
 				sizeof(struct fusb303_data), GFP_KERNEL);
 	if (!data) {
@@ -2518,6 +2520,10 @@ static int fusb303_probe(struct i2c_client *client,
 	pr_err("fusb303 role = %d\n", desc->role_def);
 	chip->tcpc = tcpc_device_register(cdev,
 			desc, &fusb303_tcpc_ops, chip);
+	if (IS_ERR_OR_NULL(chip->tcpc)) {
+		ret = IS_ERR(chip->tcpc) ? PTR_ERR(chip->tcpc) : -ENODEV;
+		goto err4;
+	}
 	chip->tcpc->typec_attach_old = TYPEC_UNATTACHED;
 	chip->tcpc->typec_attach_new = TYPEC_UNATTACHED;
 	ret = fusb303_init_gpio(chip);
