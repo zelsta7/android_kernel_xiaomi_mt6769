@@ -1073,6 +1073,10 @@ void charger_manager_set_prop_system_temp_level(int temp_level)
 
 	if (pinfo == NULL)
 		return ;
+	if (!pinfo->usb_psy || !pinfo->usb_psy->desc) {
+		pr_warn_ratelimited("%s: USB power supply not ready\n", __func__);
+		return;
+	}
 	pcba_to_thermal = get_huaqin_pcba_config();
 #if defined(CONFIG_TARGET_PRODUCT_LANCELOTCOMMON)
 	if (pcba_to_thermal == PCBA_J19_MP_CN)
