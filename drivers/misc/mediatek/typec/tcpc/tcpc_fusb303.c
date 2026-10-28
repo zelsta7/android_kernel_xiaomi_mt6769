@@ -2467,7 +2467,7 @@ static int fusb303_probe(struct i2c_client *client,
 		if (ret >= 0)
 			ret = -ENODEV;
 		goto err1;
-}
+	}
 	data = devm_kzalloc(cdev,
 				sizeof(struct fusb303_data), GFP_KERNEL);
 	if (!data) {
