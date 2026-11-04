@@ -706,9 +706,18 @@ void fgauge_get_profile_id(void)
 }
 #endif
 
+static void fg_set_charge_rdc(struct FUELGAUGE_PROFILE_STRUCT *profile,
+		int resistance)
+{
+	int i;
+
+	for (i = 0; i < MAX_CHARGE_RDC; i++)
+		profile->charge_r.rdc[i] = resistance;
+}
+
 void fg_custom_init_from_header(void)
 {
-	int i, j;
+	int i, j, k;
 
 	fgauge_get_profile_id();
 
@@ -1067,9 +1076,13 @@ void fg_custom_init_from_header(void)
 		fg_table_cust_data.fg_profile[i].shutdown_hl_zcv =
 			g_SHUTDOWN_HL_ZCV[i][gm.battery_id];
 
-		for (j = 0; j < 100; j++)
+		for (j = 0; j < 100; j++) {
 			if (p[j].resistance2 == 0)
 				p[j].resistance2 = p[j].resistance;
+			for (k = 0; k < MAX_CHARGE_RDC; k++)
+				if (p[j].charge_r.rdc[k] == 0)
+					p[j].charge_r.rdc[k] = p[j].resistance2;
+		}
 
 	}
 
@@ -1151,12 +1164,10 @@ static void fg_custom_parse_table(const struct device_node *np,
 				np, node_srting, idx, &resistance)) {
 		}
 		idx++;
-		if (column == 4) {
-			if (!of_property_read_u32_index(
+		resistance2 = resistance;
+		if (column == 4 && !of_property_read_u32_index(
 				np, node_srting, idx, &resistance2))
-				idx++;
-		} else
-			resistance2 = resistance;
+			idx++;
 
 		bm_debug("%s: mah: %d, voltage: %d, resistance: %d, resistance2: %d\n",
 			__func__, mah, voltage, resistance, resistance2);
@@ -1165,6 +1176,7 @@ static void fg_custom_parse_table(const struct device_node *np,
 		profile_p->voltage = voltage;
 		profile_p->resistance = resistance;
 		profile_p->resistance2 = resistance2;
+		fg_set_charge_rdc(profile_p, resistance2);
 
 		profile_p++;
 
@@ -1185,6 +1197,7 @@ static void fg_custom_parse_table(const struct device_node *np,
 		profile_p->voltage = voltage;
 		profile_p->resistance = resistance;
 		profile_p->resistance2 = resistance2;
+		fg_set_charge_rdc(profile_p, resistance2);
 		idx = idx + column;
 	}
 }
